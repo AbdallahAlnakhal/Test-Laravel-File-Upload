@@ -4,18 +4,30 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\Storage;
 
 class ShopController extends Controller
 {
-    public function store(Request $request)
-    {
-        $filename = $request->file('photo')->getClientOriginalName();
-        $request->file('photo')->storeAs('shops', $filename);
 
-        // TASK: resize the uploaded image from /storage/app/shops/$filename
-        //   to size of 500x500 and store it as /storage/app/shops/resized-$filename
-        // Use intervention/image package, it's already pre-installed for you
+public function store(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
 
-        return 'Success';
-    }
+    $filename = $request->file('photo')->getClientOriginalName();
+    $request->file('photo')->storeAs('shops', $filename);
+
+    // Resize the uploaded image using Intervention/Image package
+    $resizedImage = Image::make(storage_path('app/shops/' . $filename))
+        ->fit(500, 500)
+        ->encode();
+
+    // Store the resized image in /storage/app/shops/resized-$filename
+    $resizedFilename = 'resized-' . $filename;
+    Storage::put('shops/' . $resizedFilename, $resizedImage);
+
+    return 'Success';
+}
 }

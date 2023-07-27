@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 use App\Models\Company;
 use Illuminate\Http\Request;
@@ -17,12 +18,17 @@ class CompanyController extends Controller
         return 'Success';
     }
 
-    public function show(Company $company)
-    {
-        // TASK: retrieve the full URL to the uploaded photo file, using Spatie Media Library
-        $photo = '???';
 
-        return view('companies.show', compact('company', 'photo'));
+public function show(Company $company)
+{
+    $media = $company->getMedia('companies');
+
+    if ($media->count() > 0) {
+        $url = $media[0]->getUrl();
+    } else {
+        $url = 'default-url.jpg';
     }
+    return response("Company: {$company->name}\r\n\r\n<br />\r\n\r\n<img src=\"$url\" />\r\n");
+}
 
 }

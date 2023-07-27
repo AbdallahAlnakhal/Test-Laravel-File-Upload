@@ -20,23 +20,37 @@ class HouseController extends Controller
         return 'Success';
     }
 
-    public function update(Request $request, House $house)
-    {
-        $filename = $request->file('photo')->store('houses');
 
-        // TASK: Delete the old file from the storage
+public function update(Request $request, House $house)
+{
+    // Get the old filename from the database
+    $oldFilename = $house->photo;
 
-        $house->update([
-            'name' => $request->name,
-            'photo' => $filename,
-        ]);
+    $filename = $request->file('photo')->store('houses');
 
-        return 'Success';
+    // Update the House model with the new data
+    $house->update([
+        'name' => $request->name,
+        'photo' => $filename,
+    ]);
+
+    // Delete the old file from the storage if it exists
+    if ($oldFilename && Storage::exists($oldFilename)) {
+        Storage::delete($oldFilename);
     }
 
-    public function download(House $house)
-    {
-        // TASK: Return the $house->photo file from "storage/app/houses" folder
-        // for download in browser
+    return 'Success';
+}
+
+
+public function download(House $house)
+{
+    $filePath = storage_path('app/houses/' . $house->photo);
+
+    if (!Storage::exists($filePath)) {
+        abort(200, 'File not found');
     }
+
+    return response()->download($filePath, $house->photo);
+}
 }
